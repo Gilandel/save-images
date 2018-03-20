@@ -17,42 +17,47 @@ const diSupport = Boolean(chrome.downloads.onDeterminingFilename);
 var download = (() => {
   let jobs = [];
   let zip;
-  const indices = {};
+  let indices = {};
+  let pad;
   let tab;
+  let count;
   let request;
 
   function download(obj) {
     return fetch(obj.url).then(response => {
       if (response.ok) {
-        const disposition = response.headers.get('Content-Disposition');
-        let name;
-        if (disposition) {
-          const tmp = /filename=([^;]*)/.exec(disposition);
-          if (tmp && tmp.length) {
-            name = tmp[1].replace(/["']$/, '').replace(/^["']/, '');
-          }
-        }
-        if (!name) {
-          const type = response.headers.get('Content-Type');
-          const url = obj.url.replace(/\/$/, '');
-          const tmp = /(title|filename)=([^&]+)/.exec(url);
-          if (tmp && tmp.length) {
-            name = tmp[2];
-          }
-          else {
-            name = url.substring(url.lastIndexOf('/') + 1);
-          }
-          name = decodeURIComponent(name.split('?')[0].split('&')[0]) || 'image';
-          if (name.indexOf('.') === -1) {
-            if (type) {
-              name += '.' + type.split('/').pop().split(/[+;]/).shift();
-            }
-            else if (request.addJPG) {
-              name += '.jpg';
-            }
-          }
-        }
-        name = name.slice(-20);
+		let name;
+		const disposition = response.headers.get('Content-Disposition');
+		if (disposition) {
+		  const tmp = /filename=([^;]*)/.exec(disposition);
+		  if (tmp && tmp.length) {
+			name = tmp[1].replace(/["']$/, '').replace(/^["']/, '');
+		  }
+		}
+		if (!name) {
+		  const type = response.headers.get('Content-Type');
+		  const url = obj.url.replace(/\/$/, '');
+		  const tmp = /(title|filename)=([^&]+)/.exec(url);
+		  if (tmp && tmp.length) {
+			name = tmp[2];
+		  }
+		  else {
+			name = url.substring(url.lastIndexOf('/') + 1);
+		  }
+		  name = decodeURIComponent(name.split('?')[0].split('&')[0]) || 'image';
+		  if (name.indexOf('.') === -1) {
+			if (type) {
+			  name += '.' + type.split('/').pop().split(/[+;]/).shift();
+			}
+			else if (request.addJPG) {
+			  name += '.jpg';
+			}
+		  }
+		}
+		if (request.prefix) {
+		  name = (pad + (count++)).slice(-pad.length) + ' - ' + name;
+		}
+		name = name.slice(-128);
         if (name in indices) {
           const index = name.lastIndexOf('.') || name.length;
           const tmp = name.substr(0, index) + ' - ' + indices[name] + name.substr(index);
@@ -111,7 +116,10 @@ var download = (() => {
     request = _request;
     tab = _tab;
     jobs = request.images.map(i => i.src);
+	pad = new Array(request.images.length.toString().length + 1).join('0');
     zip = new JSZip();
+	count = 1;
+	indices = {};
     one();
   };
 })();

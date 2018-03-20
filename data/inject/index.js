@@ -19,6 +19,9 @@ var elements = {
     total: document.getElementById('total-number'),
     progress: document.getElementById('progress')
   },
+  format: {
+    prefix: document.getElementById('prefix-images-name')
+  },
   group: {
     size: document.getElementById('group-size'),
     dimension: document.getElementById('group-dimension'),
@@ -239,7 +242,8 @@ document.addEventListener('click', ({target}) => {
         custom: elements.save.directory.value.replace(/[\\\\/:*?"<>|]/g, '_'),
         addJPG: elements.type.noType.checked,
         images,
-        saveAs: elements.save.dialog.checked
+        saveAs: elements.save.dialog.checked,
+		prefix: elements.format.prefix.checked
       });
     };
 
